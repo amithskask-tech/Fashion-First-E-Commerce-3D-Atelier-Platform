@@ -37,16 +37,35 @@ export const CustomizerPanel: React.FC<CustomizerPanelProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [autoNotice, setAutoNotice] = useState<string | null>(null);
 
-  const categories: Array<{ key: OptionCategory; label: string }> = [
-    { key: 'collar', label: 'Collar' },
-    { key: 'cuff', label: 'Cuffs' },
-    { key: 'sleeve', label: 'Sleeves' },
-    { key: 'placket', label: 'Front Placket' },
-    { key: 'pocket', label: 'Pocket' },
-    { key: 'buttons', label: 'Buttons' },
-    { key: 'back_pleat', label: 'Back Pleat' },
-    { key: 'hem', label: 'Hemline' }
-  ];
+  const relevantOptions = React.useMemo(() => {
+    return options.filter(
+      (o) => o.isActive && (!o.garmentTypeId || o.garmentTypeId === designState.garmentTypeId)
+    );
+  }, [options, designState.garmentTypeId]);
+
+  const categoryLabels: Record<string, string> = {
+    silhouette: 'Silhouette',
+    length_slits: 'Length & Slits',
+    neckline: 'Neckline',
+    collar: 'Collar',
+    kurta_patti: 'Kurta Patti',
+    placket: 'Front Placket',
+    sleeve: 'Sleeves',
+    cuff: 'Cuffs',
+    pocket: 'Pockets',
+    borders_zari: 'Zari Borders',
+    buttons: 'Buttons',
+    back_pleat: 'Back Pleat',
+    hem: 'Hemline'
+  };
+
+  const categories = React.useMemo(() => {
+    const presentCats = Array.from(new Set(relevantOptions.map((o) => o.category))) as OptionCategory[];
+    return presentCats.map((cat) => ({
+      key: cat,
+      label: categoryLabels[cat] || cat.replace(/_/g, ' ')
+    }));
+  }, [relevantOptions]);
 
   const handleOptionSelect = (category: OptionCategory, optionId: string) => {
     setErrorMessage(null);
@@ -82,7 +101,7 @@ export const CustomizerPanel: React.FC<CustomizerPanelProps> = ({
     setAutoNotice('Design duplicated into new revision.');
   };
 
-  const activeOptions = options.filter(
+  const activeOptions = relevantOptions.filter(
     (o) => activeTab !== 'fabric' && o.category === activeTab && o.isActive
   );
 

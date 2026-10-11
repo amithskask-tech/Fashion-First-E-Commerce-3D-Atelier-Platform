@@ -102,13 +102,13 @@ export function checkMeasurementConsistency(m: BodyMeasurements): ConsistencyWar
     });
   }
 
-  // 3. Shirt Length relative to Height
+  // 3. Garment (Shirt / Kurta) Length relative to Height (Western shirts ~35-52%, Kurtas up to 65%)
   const expectedMinShirt = m.heightMm * 0.35;
-  const expectedMaxShirt = m.heightMm * 0.52;
+  const expectedMaxShirt = m.heightMm * 0.65;
   if (m.shirtLengthMm < expectedMinShirt || m.shirtLengthMm > expectedMaxShirt) {
     warnings.push({
       field: 'shirtLengthMm',
-      message: `Shirt length (${m.shirtLengthMm}mm) seems unusual for height ${m.heightMm}mm. Typical range is ${Math.round(expectedMinShirt)}-${Math.round(expectedMaxShirt)}mm.`,
+      message: `Garment length (${m.shirtLengthMm}mm) seems unusual for height ${m.heightMm}mm. Typical range is ${Math.round(expectedMinShirt)}-${Math.round(expectedMaxShirt)}mm.`,
       severity: 'warning'
     });
   }

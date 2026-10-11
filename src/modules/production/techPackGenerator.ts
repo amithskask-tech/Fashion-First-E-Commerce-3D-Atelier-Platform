@@ -48,17 +48,24 @@ export function generateProductionSpec(input: TechPackInput): ProductionSpec {
     hemAllowanceMm
   };
 
+  const isKurta =
+    input.garmentName.toLowerCase().includes('kurta') ||
+    input.selectedOptions.some((o) => o.category === 'kurta_patti' || o.category === 'borders_zari');
+
   const sleeveOpt = input.selectedOptions.find((o) => o.category === 'sleeve');
-  const isShortSleeve = sleeveOpt?.code === 'sleeve_short';
-  const fabricConsumption = isShortSleeve ? '1.80 meters' : '2.20 meters';
+  const isShortSleeve = sleeveOpt?.code?.includes('short');
+  const fabricConsumption = isKurta
+    ? (isShortSleeve ? '2.40 meters' : '3.10 meters')
+    : (isShortSleeve ? '1.80 meters' : '2.20 meters');
 
   const buttonOpt = input.selectedOptions.find((o) => o.category === 'buttons');
-  const buttonType = buttonOpt?.name || 'Standard 18L Resin';
+  const buttonType = buttonOpt?.name || (isKurta ? 'Antique Brass Kurta Buttons' : 'Standard 18L Resin');
 
-  const collarOpt = input.selectedOptions.find((o) => o.category === 'collar');
+  const collarOpt = input.selectedOptions.find((o) => o.category === 'collar' || o.category === 'neckline');
   const cuffOpt = input.selectedOptions.find((o) => o.category === 'cuff');
-  const placketOpt = input.selectedOptions.find((o) => o.category === 'placket');
+  const placketOpt = input.selectedOptions.find((o) => o.category === 'placket' || o.category === 'kurta_patti');
   const pocketOpt = input.selectedOptions.find((o) => o.category === 'pocket');
+  const borderOpt = input.selectedOptions.find((o) => o.category === 'borders_zari');
 
   const billOfMaterials = [
     {
@@ -67,15 +74,26 @@ export function generateProductionSpec(input: TechPackInput): ProductionSpec {
       quantity: fabricConsumption
     },
     {
-      item: 'Interlining (Collar & Cuffs)',
+      item: isKurta ? 'Interlining (Mandarin Collar & Patti)' : 'Interlining (Collar & Cuffs)',
       spec: 'Medium-firm woven cotton fusible interlining (90 gsm)',
-      quantity: '0.40 meters'
+      quantity: isKurta ? '0.30 meters' : '0.40 meters'
     },
     {
       item: 'Buttons',
-      spec: `Size 18L (Front placket & gauntlet) + 14L (Collar band if applicable) - ${buttonType}`,
-      quantity: '11 units'
+      spec: isKurta
+        ? `Size 16L Front Kurta Patti - ${buttonType}`
+        : `Size 18L (Front placket & gauntlet) + 14L (Collar band if applicable) - ${buttonType}`,
+      quantity: isKurta ? '4 units (+1 spare)' : '11 units'
     },
+    ...(isKurta && borderOpt?.code?.includes('kasavu')
+      ? [
+          {
+            item: 'Metallic Zari Border',
+            spec: 'Authentic 45mm Kerala Kasavu metallic gold zari border band',
+            quantity: '2.50 meters'
+          }
+        ]
+      : []),
     {
       item: 'Sewing Thread',
       spec: '100% Core-spun polyester 120/2 matching shell color',
@@ -83,16 +101,26 @@ export function generateProductionSpec(input: TechPackInput): ProductionSpec {
     }
   ];
 
-  const constructionInstructions = [
-    `Stitch Density: Maintain 18-20 stitches per inch (SPI) throughout for luxury fine-tailoring finish.`,
-    `Seams: Single needle construction with twin-needle flat-felled side seams (6mm gauge).`,
-    `Collar: Construct ${collarOpt?.name || 'Standard Collar'} with fused upper and unfused lower collar band. Include collar stay pockets.`,
-    `Cuffs: Construct ${cuffOpt?.name || 'Standard Cuff'} with 12mm topstitching.`,
-    `Placket: ${placketOpt?.name || 'Standard Placket'} with 35mm finished width. Keyhole buttonholes.`,
-    `Pocket: ${pocketOpt?.name || 'No Pocket'}.`,
-    `Bottom Hem: ${cutDimensions.hemAllowanceMm}mm narrow hand-rolled or clean double-folded finish.`,
-    `Quality Tolerance: Maximum cutting tolerance allowance is ±8mm.`
-  ];
+  const constructionInstructions = isKurta
+    ? [
+        `Stitch Density: 16-18 stitches per inch (SPI) for artisanal ethnic tailoring.`,
+        `Side Slits (Chak): Construct 320mm side slits measured up from hemline. Reinforce slit opening junction with concealed hand-tack or triangle stay stitch.`,
+        `Kurta Patti: Construct ${placketOpt?.name || 'Classic Front Patti'} with 35mm finished width and 280mm length from collar seam.`,
+        `Neckline: Tailor ${collarOpt?.name || 'Classic Mandarin Band Collar'} with reinforced interlining.`,
+        `Pockets: ${pocketOpt?.name || 'Dual Inseam Side Pockets'}. Conceal pocket openings inside side seams.`,
+        `Border Finish: ${borderOpt?.name || 'Clean Finished Hem'}. If Kasavu Zari selected, apply with mitered corner fold at side slit base.`,
+        `Quality Tolerance: Maximum cutting tolerance allowance is ±8mm.`
+      ]
+    : [
+        `Stitch Density: Maintain 18-20 stitches per inch (SPI) throughout for luxury fine-tailoring finish.`,
+        `Seams: Single needle construction with twin-needle flat-felled side seams (6mm gauge).`,
+        `Collar: Construct ${collarOpt?.name || 'Standard Collar'} with fused upper and unfused lower collar band. Include collar stay pockets.`,
+        `Cuffs: Construct ${cuffOpt?.name || 'Standard Cuff'} with 12mm topstitching.`,
+        `Placket: ${placketOpt?.name || 'Standard Placket'} with 35mm finished width. Keyhole buttonholes.`,
+        `Pocket: ${pocketOpt?.name || 'No Pocket'}.`,
+        `Bottom Hem: ${cutDimensions.hemAllowanceMm}mm narrow hand-rolled or clean double-folded finish.`,
+        `Quality Tolerance: Maximum cutting tolerance allowance is ±8mm.`
+      ];
 
   return {
     id: crypto.randomUUID(),

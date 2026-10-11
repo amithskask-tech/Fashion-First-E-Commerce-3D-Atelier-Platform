@@ -95,7 +95,7 @@ export function applyOptionSelection(
   }
 
   // Clone current selections
-  const updatedSelections: Record<OptionCategory, string> = {
+  const updatedSelections: Partial<Record<OptionCategory, string>> = {
     ...currentState.selections,
     [category]: targetOptionId
   };
@@ -112,7 +112,7 @@ export function applyOptionSelection(
           updatedSelections[forcedOption.category] = forcedOption.id;
           appliedAutoCorrections.push({
             category: forcedOption.category,
-            previousOptionId: previousId,
+            previousOptionId: previousId || '',
             newOptionId: forcedOption.id,
             reason: rule.reason
           });
@@ -122,7 +122,7 @@ export function applyOptionSelection(
   }
 
   // Validate resulting combination
-  const validation = validateDesignSelections(updatedSelections, options, rules);
+  const validation = validateDesignSelections(updatedSelections as Record<OptionCategory, string>, options, rules);
 
   if (!validation.isValid) {
     return {
@@ -135,7 +135,7 @@ export function applyOptionSelection(
   return {
     newState: {
       ...currentState,
-      selections: updatedSelections,
+      selections: updatedSelections as Record<OptionCategory, string>,
       version: currentState.version + 1
     },
     appliedAutoCorrections,
@@ -153,19 +153,16 @@ export function createDefaultDesignSelections(
 ): DesignSelectionState {
   const selections: Partial<Record<OptionCategory, string>> = {};
 
-  const categories: OptionCategory[] = [
-    'collar',
-    'cuff',
-    'sleeve',
-    'placket',
-    'pocket',
-    'buttons',
-    'back_pleat',
-    'hem'
-  ];
+  // Filter options relevant to this garment type
+  const relevantOptions = options.filter(
+    (o) => o.isActive && (!o.garmentTypeId || o.garmentTypeId === garmentTypeId)
+  );
+
+  // Group by category and pick default
+  const categories = Array.from(new Set(relevantOptions.map((o) => o.category)));
 
   for (const cat of categories) {
-    const catOptions = options.filter((o) => o.category === cat && o.isActive);
+    const catOptions = relevantOptions.filter((o) => o.category === cat);
     const defaultOpt = catOptions.find((o) => o.isDefault) || catOptions[0];
     if (defaultOpt) {
       selections[cat] = defaultOpt.id;

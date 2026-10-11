@@ -145,8 +145,13 @@ export const DesignConfirmationModal: React.FC<DesignConfirmationModalProps> = (
                     {option?.name || 'Default'}
                   </span>
                   <span className="text-[10px] text-slate-400">
-                    {option?.surchargeCents
-                      ? `+${formatCurrency(option.surchargeCents, 'USD')}`
+                    {option?.surchargeCents || option?.surchargePaise
+                      ? `+${formatCurrency(
+                          pricing.currency === 'INR'
+                            ? (option.surchargePaise ?? option.surchargeCents)
+                            : option.surchargeCents,
+                          pricing.currency
+                        )}`
                       : 'Included'}
                   </span>
                 </div>

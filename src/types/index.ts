@@ -1,10 +1,27 @@
 // ============================================================================
-// Core Domain Types & Data Contracts
+// Core Domain Types & Data Contracts — Indian Fashion E-Commerce Platform
 // ============================================================================
 
 export type UserRole = 'customer' | 'staff' | 'admin';
 export type FitPreference = 'slim' | 'regular' | 'relaxed';
 export type DisplayUnit = 'metric' | 'imperial';
+
+export type GarmentCategoryType =
+  | 'traditional'
+  | 'contemporary_indo_western'
+  | 'everyday'
+  | 'western';
+
+export type GenderType = 'men' | 'women' | 'unisex';
+
+export type OccasionType =
+  | 'festive'
+  | 'wedding'
+  | 'ceremony'
+  | 'everyday'
+  | 'office';
+
+// Dynamic option categories supporting Kurtas, Nehru Jackets, Blouses, and Western Shirts
 export type OptionCategory =
   | 'collar'
   | 'cuff'
@@ -13,7 +30,16 @@ export type OptionCategory =
   | 'pocket'
   | 'buttons'
   | 'back_pleat'
-  | 'hem';
+  | 'hem'
+  // Indian Fashion Categories
+  | 'silhouette'
+  | 'length_slits'
+  | 'neckline'
+  | 'kurta_patti'
+  | 'borders_zari'
+  | 'jacket_opening'
+  | 'blouse_back'
+  | 'blouse_closure';
 
 export type CompatibilityRuleType = 'incompatible' | 'requires' | 'forces_default';
 
@@ -66,7 +92,7 @@ export interface BodyMeasurements {
   sleeveLengthMm: number;  // 400 - 1000 mm
   bicepCircMm: number;     // 180 - 650 mm
   wristCircMm: number;     // 100 - 350 mm
-  shirtLengthMm: number;   // 500 - 1100 mm
+  shirtLengthMm: number;   // 500 - 1400 mm (supports Kurtas up to 1400mm)
   additional?: Record<string, number>;
   createdAt?: string;
 }
@@ -74,24 +100,41 @@ export interface BodyMeasurements {
 // Garment Catalog & Customization
 export interface GarmentType {
   id: string;
-  code: string;
+  code: string; // 'men_kurta', 'men_shirt', 'men_nehru_jacket', 'women_blouse'
   name: string;
   description: string;
+  category: GarmentCategoryType;
+  gender: GenderType;
+  occasion: OccasionType;
+  region: string;
+  isReadyMade: boolean;
+  isCustomizable: boolean;
   isActive: boolean;
 }
 
+// Rich Indian Textile Specification
 export interface Fabric {
   id: string;
   code: string;
   name: string;
+  regionalTradeName?: string;
+  regionOfOrigin?: string;
   materialComposition: string;
   weaveType: string;
+  weightGsm?: number;
+  drapeCharacteristics?: 'fluid' | 'structured' | 'crisp' | 'soft';
   colorName: string;
   colorHex: string;
-  patternType: 'solid' | 'stripes' | 'checks';
+  patternType: 'solid' | 'stripes' | 'checks' | 'zari_border' | 'block_print';
+  borderPatternType?: 'kasavu_gold' | 'temple_zari' | 'ikat_geometric' | 'none';
+  borderWidthMm?: number;
   textureAssetPath?: string;
-  surchargeCents: number;
+  surchargeCents: number; // For backward compatibility / USD
+  surchargePaise: number; // INR minor units (1 INR = 100 paise)
+  suitableGarmentTypes?: string[];
+  careInstructions?: string;
   inStock: boolean;
+  isAuthenticityVerified: boolean;
 }
 
 export interface CustomizationOption {
@@ -102,6 +145,7 @@ export interface CustomizationOption {
   name: string;
   description: string;
   surchargeCents: number;
+  surchargePaise?: number;
   defaultModelSlot: string;
   isDefault: boolean;
   isActive: boolean;
@@ -115,11 +159,76 @@ export interface OptionCompatibilityRule {
   reason: string;
 }
 
+// Ready-Made Product & Inventory Models
+export interface ProductVariant {
+  id: string;
+  productId: string;
+  sizeCode: StandardSizeCode;
+  stockQuantity: number;
+}
+
+export type IndianCategory = 'kurtas' | 'nehru_jackets' | 'sherwanis' | 'dhotis_mundu' | 'sarees' | 'blouses' | 'western';
+export type GenderCategory = GenderType;
+export type CulturalOccasion = OccasionType;
+
+export interface Product {
+  id: string;
+  garmentTypeId?: string;
+  sku: string;
+  title: string;
+  description: string;
+  category: IndianCategory;
+  gender: GenderType;
+  occasion: OccasionType;
+  region: string;
+  fabricName: string;
+  colorName: string;
+  colorHex: string;
+  pricePaise: number;
+  isReadyMade: boolean;
+  isCustomizable: boolean;
+  imagePlaceholder?: string;
+  variants: ProductVariant[];
+}
+
+// Unified Cart Item (Supports both Ready-Made and Custom Made-To-Measure)
+export type CartItemType = 'ready_made' | 'custom_tailored';
+
+export interface CartItem {
+  id: string;
+  itemType?: CartItemType;
+  title: string;
+  subtitle?: string;
+  unitPricePaise: number;
+  currency?: string;
+  quantity: number;
+  // Ready-Made fields:
+  productVariantId?: string;
+  productId?: string;
+  sizeCode?: StandardSizeCode;
+  fabricName?: string;
+  isCustom?: boolean;
+  customSummary?: string;
+  designState?: DesignSelectionState;
+  // Custom Tailored fields:
+  customDesign?: {
+    garmentTypeId: string;
+    garmentCode: string;
+    fabric: Fabric;
+    selections: Record<string, string>;
+    optionsSummary: Array<{ category: string; name: string }>;
+    measurements: BodyMeasurements;
+    finishedMeasurements: FinishedGarmentMeasurements;
+    sizeRecommendation: StandardSizeCode;
+    pricingBreakdown: PriceBreakdown;
+  };
+}
+
 // Design State
 export interface DesignSelectionState {
   garmentTypeId: string;
   fabricId: string;
-  selections: Record<OptionCategory, string>; // category -> optionId
+  selections: Record<string, string>; // category -> optionId
   version: number;
 }
 
@@ -168,9 +277,10 @@ export interface FinishedGarmentMeasurements {
   neckMm: number;
   shoulderWidthMm: number;
   sleeveLengthMm: number;
-  shirtLengthMm: number;
+  shirtLengthMm: number; // Garment length (e.g. 1040mm for Kurta, 760mm for shirt)
   bicepMm: number;
   wristMm: number;
+  sideSlitLengthMm?: number; // Kurta side slit opening
 }
 
 export interface SizeRecommendation {
@@ -187,6 +297,7 @@ export interface PriceLineItem {
   code: string;
   description: string;
   amountCents: number;
+  amountPaise?: number;
   type: 'base' | 'fabric_surcharge' | 'customization' | 'custom_fit';
 }
 
@@ -198,6 +309,9 @@ export interface PriceBreakdown {
   subtotalCents: number;
   taxCents: number;
   totalCents: number;
+  // INR Values in paise
+  basePricePaise?: number;
+  totalPaise?: number;
   currency: string;
   lineItems: PriceLineItem[];
   appliedRuleVersion: number;
@@ -209,10 +323,11 @@ export interface OrderItemSnapshot {
     garmentName: string;
     fabric: Fabric;
     options: Array<{
-      category: OptionCategory;
+      category: string;
       name: string;
       code: string;
       surchargeCents: number;
+      surchargePaise?: number;
     }>;
   };
   measurements: BodyMeasurements;
@@ -238,6 +353,7 @@ export interface ProductionSpec {
     bicepCutMm: number;
     wristCutMm: number;
     shirtLengthCutMm: number;
+    sideSlitCutMm?: number;
     seamAllowanceMm: number;
     hemAllowanceMm: number;
   };
@@ -258,6 +374,7 @@ export interface Order {
   orderNumber: string;
   status: OrderStatus;
   totalPriceCents: number;
+  totalPricePaise?: number;
   currency: string;
   idempotencyKey?: string;
   createdAt: string;
@@ -266,6 +383,7 @@ export interface Order {
     id: string;
     quantity: number;
     unitPriceCents: number;
+    unitPricePaise?: number;
     designSnapshot: OrderItemSnapshot;
     productionSpec?: ProductionSpec;
   }>;

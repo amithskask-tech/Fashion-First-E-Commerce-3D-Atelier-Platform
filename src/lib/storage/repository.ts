@@ -12,10 +12,12 @@ import {
   Order,
   ProductionSpec,
   ProductionEvent,
-  OrderStatus
+  OrderStatus,
+  Product,
+  CartItem
 } from '../../types';
 import {
-  INITIAL_GARMENT_TYPE,
+  INITIAL_GARMENT_TYPES,
   INITIAL_FABRICS,
   INITIAL_OPTIONS,
   INITIAL_COMPATIBILITY_RULES,
@@ -23,7 +25,8 @@ import {
   INITIAL_EASE_RULES,
   INITIAL_PROFILE,
   INITIAL_BODY_PROFILES,
-  INITIAL_BODY_MEASUREMENTS
+  INITIAL_BODY_MEASUREMENTS,
+  INITIAL_PRODUCTS
 } from './mockData';
 
 class LocalRepository {
@@ -46,27 +49,110 @@ class LocalRepository {
 
   // Garment Catalog
   async getGarmentTypes(): Promise<GarmentType[]> {
-    return [INITIAL_GARMENT_TYPE];
+    return this.getStorage('garment_types', INITIAL_GARMENT_TYPES);
   }
 
-  async getFabrics(): Promise<Fabric[]> {
-    return this.getStorage('fabrics', INITIAL_FABRICS);
+  async getFabrics(garmentTypeCode?: string): Promise<Fabric[]> {
+    const all = this.getStorage('fabrics', INITIAL_FABRICS);
+    if (!garmentTypeCode) return all;
+    return all.filter((f) => !f.suitableGarmentTypes || f.suitableGarmentTypes.includes(garmentTypeCode));
   }
 
-  async getCustomizationOptions(): Promise<CustomizationOption[]> {
-    return this.getStorage('options', INITIAL_OPTIONS);
+  async getCustomizationOptions(garmentTypeId?: string): Promise<CustomizationOption[]> {
+    const all = this.getStorage('options', INITIAL_OPTIONS);
+    if (!garmentTypeId) return all;
+    return all.filter((o) => o.garmentTypeId === garmentTypeId);
   }
 
   async getCompatibilityRules(): Promise<OptionCompatibilityRule[]> {
     return this.getStorage('rules', INITIAL_COMPATIBILITY_RULES);
   }
 
-  async getGradingChart(): Promise<GarmentMeasurementsGrading[]> {
-    return this.getStorage('grading', INITIAL_GRADING_CHART);
+  async getGradingChart(garmentTypeId?: string): Promise<GarmentMeasurementsGrading[]> {
+    const all = this.getStorage('grading', INITIAL_GRADING_CHART);
+    if (!garmentTypeId) return all;
+    return all.filter((g) => g.garmentTypeId === garmentTypeId);
   }
 
-  async getEaseRules(): Promise<SizeEaseRule[]> {
-    return this.getStorage('ease', INITIAL_EASE_RULES);
+  async getEaseRules(garmentTypeId?: string): Promise<SizeEaseRule[]> {
+    const all = this.getStorage('ease', INITIAL_EASE_RULES);
+    if (!garmentTypeId) return all;
+    return all.filter((e) => e.garmentTypeId === garmentTypeId);
+  }
+
+  // Ready-Made Products
+  async getProducts(filters?: {
+    category?: string;
+    gender?: string;
+    occasion?: string;
+    region?: string;
+    search?: string;
+  }): Promise<Product[]> {
+    let prods = this.getStorage('products', INITIAL_PRODUCTS);
+    if (!filters) return prods;
+
+    if (filters.category && filters.category !== 'all') {
+      prods = prods.filter((p) => p.category === filters.category);
+    }
+    if (filters.gender && filters.gender !== 'all') {
+      prods = prods.filter((p) => p.gender === filters.gender);
+    }
+    if (filters.occasion && filters.occasion !== 'all') {
+      prods = prods.filter((p) => p.occasion === filters.occasion);
+    }
+    if (filters.region && filters.region !== 'all') {
+      prods = prods.filter((p) => p.region.toLowerCase().includes(filters.region!.toLowerCase()));
+    }
+    if (filters.search && filters.search.trim().length > 0) {
+      const q = filters.search.toLowerCase();
+      prods = prods.filter(
+        (p) =>
+          p.title.toLowerCase().includes(q) ||
+          p.description.toLowerCase().includes(q) ||
+          p.fabricName.toLowerCase().includes(q)
+      );
+    }
+    return prods;
+  }
+
+  async getProductById(id: string): Promise<Product | null> {
+    const prods = await this.getProducts();
+    return prods.find((p) => p.id === id) || null;
+  }
+
+  // Unified Shopping Cart
+  async getCartItems(): Promise<CartItem[]> {
+    return this.getStorage<CartItem[]>('cart_items', []);
+  }
+
+  async addToCart(item: CartItem): Promise<CartItem[]> {
+    const items = await this.getCartItems();
+    const existingIndex = items.findIndex(
+      (i) =>
+        i.itemType === 'ready_made' &&
+        item.itemType === 'ready_made' &&
+        i.productVariantId === item.productVariantId &&
+        i.sizeCode === item.sizeCode
+    );
+
+    if (existingIndex >= 0) {
+      items[existingIndex].quantity += item.quantity;
+    } else {
+      items.push(item);
+    }
+    this.setStorage('cart_items', items);
+    return items;
+  }
+
+  async removeFromCart(itemId: string): Promise<CartItem[]> {
+    const items = await this.getCartItems();
+    const filtered = items.filter((i) => i.id !== itemId);
+    this.setStorage('cart_items', filtered);
+    return filtered;
+  }
+
+  async clearCart(): Promise<void> {
+    this.setStorage('cart_items', []);
   }
 
   // User Profile

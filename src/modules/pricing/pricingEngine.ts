@@ -10,12 +10,13 @@ export interface PricingContext {
   basePriceCents: number;
   customFitSurchargeCents: number;
   isCustomFit: boolean;
+  garmentName?: string;
   currency?: string;
   appliedRuleVersion?: number;
 }
 
 /**
- * Server-authoritative price calculator operating strictly in minor currency units (cents).
+ * Server-authoritative price calculator operating strictly in minor currency units (cents / paise).
  */
 export function calculatePrice(
   design: DesignSelectionState,
@@ -27,20 +28,28 @@ export function calculatePrice(
 
   // 1. Base Garment Price
   lineItems.push({
-    code: 'BASE_SHIRT',
-    description: "Men's Tailored Shirt Base Construction",
+    code: 'BASE_GARMENT',
+    description: context.garmentName
+      ? `${context.garmentName} Base Construction`
+      : "Garment Base Construction",
     amountCents: context.basePriceCents,
     type: 'base'
   });
 
+  const isINR = context.currency === 'INR';
+
   // 2. Fabric Surcharge
   let fabricSurchargeCents = 0;
-  if (fabric.surchargeCents > 0) {
-    fabricSurchargeCents = fabric.surchargeCents;
+  const fabricCharge = isINR
+    ? (fabric.surchargePaise ?? fabric.surchargeCents)
+    : fabric.surchargeCents;
+
+  if (fabricCharge > 0) {
+    fabricSurchargeCents = fabricCharge;
     lineItems.push({
       code: `FABRIC_${fabric.code.toUpperCase()}`,
       description: `Fabric Surcharge: ${fabric.name} (${fabric.weaveType})`,
-      amountCents: fabric.surchargeCents,
+      amountCents: fabricCharge,
       type: 'fabric_surcharge'
     });
   }
@@ -51,14 +60,20 @@ export function calculatePrice(
 
   for (const [category, optionId] of Object.entries(design.selections)) {
     const opt = optionMap.get(optionId);
-    if (opt && opt.surchargeCents > 0) {
-      customizationSurchargeCents += opt.surchargeCents;
-      lineItems.push({
-        code: `OPT_${opt.code.toUpperCase()}`,
-        description: `Customization: ${opt.name} (${category})`,
-        amountCents: opt.surchargeCents,
-        type: 'customization'
-      });
+    if (opt) {
+      const optCharge = isINR
+        ? (opt.surchargePaise ?? opt.surchargeCents)
+        : opt.surchargeCents;
+
+      if (optCharge > 0) {
+        customizationSurchargeCents += optCharge;
+        lineItems.push({
+          code: `OPT_${opt.code.toUpperCase()}`,
+          description: `Customization: ${opt.name} (${category})`,
+          amountCents: optCharge,
+          type: 'customization'
+        });
+      }
     }
   }
 
@@ -98,13 +113,15 @@ export function calculatePrice(
 }
 
 /**
- * Formats minor currency units into localized currency string.
+ * Formats minor currency units (cents / paise) into localized currency string.
  */
-export function formatCurrency(cents: number, currency: string = 'USD'): string {
-  const dollars = cents / 100;
-  return new Intl.NumberFormat('en-US', {
+export function formatCurrency(minorUnits: number, currency: string = 'INR'): string {
+  const value = minorUnits / 100;
+  const locale = currency === 'INR' ? 'en-IN' : 'en-US';
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
-    minimumFractionDigits: 2
-  }).format(dollars);
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value);
 }

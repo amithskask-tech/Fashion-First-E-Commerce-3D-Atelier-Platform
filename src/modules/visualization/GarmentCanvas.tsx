@@ -10,10 +10,12 @@ import {
 } from '../../types';
 import { AvatarViewer } from '../avatar/AvatarViewer';
 import { ShirtModel3D } from './ShirtModel3D';
+import { KurtaModel3D } from './KurtaModel3D';
 import { ViewerControls } from './ViewerControls';
 import { Info } from 'lucide-react';
 
 interface GarmentCanvasProps {
+  garmentTypeCode?: string;
   fabric: Fabric;
   selectedOptions: Record<string, CustomizationOption>;
   bodyMeasurements: BodyMeasurements;
@@ -21,6 +23,7 @@ interface GarmentCanvasProps {
 }
 
 export const GarmentCanvas: React.FC<GarmentCanvasProps> = ({
+  garmentTypeCode,
   fabric,
   selectedOptions,
   bodyMeasurements,
@@ -29,6 +32,11 @@ export const GarmentCanvas: React.FC<GarmentCanvasProps> = ({
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const [showAvatar, setShowAvatar] = useState<boolean>(true);
   const [autoRotate, setAutoRotate] = useState<boolean>(false);
+
+  const isKurta =
+    garmentTypeCode === 'men_kurta' ||
+    garmentTypeCode === '11111111-1111-1111-1111-000000000001' ||
+    Boolean(selectedOptions.neckline || selectedOptions.kurta_patti || selectedOptions.borders_zari);
 
   const handleCameraAngle = (angle: 'front' | 'side' | 'back' | 'reset') => {
     if (!controlsRef.current) return;
@@ -56,9 +64,10 @@ export const GarmentCanvas: React.FC<GarmentCanvasProps> = ({
     <div className="relative w-full h-full min-h-[460px] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl flex flex-col">
       {/* Disclaimer Overlay Header */}
       <div className="absolute top-3 left-3 right-3 z-10 flex items-center gap-2 bg-slate-900/80 backdrop-blur-md px-3 py-2 rounded-xl border border-slate-800/80 text-xs text-slate-400 pointer-events-none">
-        <Info className="w-4 h-4 text-sky-400 shrink-0" />
+        <Info className="w-4 h-4 text-amber-400 shrink-0" />
         <span>
-          <strong className="text-slate-200">Interactive 3D Visualizer:</strong> Proportions reflect selected options and body sizing. Not a certified tailor body scan.
+          <strong className="text-slate-200">Interactive 3D Visualizer:</strong>{' '}
+          {isKurta ? "Men's Tailored Kurta simulation" : "Western Dress Shirt simulation"}. Proportions reflect selected options and body sizing.
         </span>
       </div>
 
@@ -81,11 +90,19 @@ export const GarmentCanvas: React.FC<GarmentCanvasProps> = ({
           />
 
           {/* Garment Mesh Projection */}
-          <ShirtModel3D
-            fabric={fabric}
-            selectedOptions={selectedOptions}
-            garmentMeasurements={garmentMeasurements}
-          />
+          {isKurta ? (
+            <KurtaModel3D
+              fabric={fabric}
+              selectedOptions={selectedOptions}
+              garmentMeasurements={garmentMeasurements}
+            />
+          ) : (
+            <ShirtModel3D
+              fabric={fabric}
+              selectedOptions={selectedOptions}
+              garmentMeasurements={garmentMeasurements}
+            />
+          )}
 
           {/* Soft Ground Contact Shadow */}
           <ContactShadows

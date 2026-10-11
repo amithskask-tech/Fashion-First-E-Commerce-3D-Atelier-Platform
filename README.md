@@ -1,28 +1,45 @@
-# Custom Clothing Platform — V1 MVP
+# AURA ETHNICS — Indian Fashion-First E-Commerce & 3D Atelier Platform
 
-A full-stack, modular, zero-cost custom tailoring web application engineered for functional correctness, data integrity, and bespoke manufacturing workflows.
+A full-stack, modular, zero-cost Indian fashion clothing e-commerce web application engineered for authentic regional textiles, ready-to-wear shopping, real-time 3D made-to-measure customization, and master-tailor manufacturing specifications.
 
 ---
 
 ## 1. Key Capabilities
 
-- **Module A (Customer Profiles & Auth)**: Multi-profile management, unit preferences (metric/imperial), and fit preferences (slim/regular/relaxed).
-- **Module B (Body Measurement Engine)**: 11 canonical body measurements stored internally in integer millimetres and kilograms. Zod schema validation, precision conversion, and anatomical consistency checks.
-- **Module C (3D Parametric Avatar)**: Decoupled anatomical mannequin viewer with proportional scaling derived from customer measurements and prominent disclosure.
-- **Module D & E (Garment Catalog & Customization Engine)**: Declarative compatibility graph with auto-corrections (e.g. short sleeve forces clean hem cuff) and strict rejection of unfeasible combinations (e.g. French cuffs on short sleeves).
-- **Module F (Real-Time 3D Garment Visualization)**: Three.js + React Three Fiber 3D shirt viewer mapping all collar styles, cuffs, sleeves, plackets, buttons, pockets, and hem cuts. Procedural PBR fabric textures for Poplin, Oxford, Twill, and Linen.
-- **Module G (Size & Fit Engine)**: Calculates garment ease across fit preferences, compares measurements against standard grading tables (XS–XXL), and flags tailor fit warnings.
-- **Module H (Server-Authoritative Pricing)**: Integer minor unit arithmetic (cents) with itemized line items and zero rounding error.
-- **Module I (Design Confirmation)**: Pre-order manufacturing review showing full design specs, tailoring measurements comparison, size recommendation, and price breakdown.
-- **Module J & K (Order & Production Specification Engine)**: Frozen JSON snapshot storage, pseudonymized cutting specs, Bill of Materials, step-by-step assembly guide, exportable JSON, printable tech packs, and lifecycle state machine.
+- **Indian Fashion-First Catalog**:
+  - Authentic product categories: Kurtas & Sets, Royal Nehru Jackets, Kasavu Mundu & Veshti Sets, Women's Kurtis, and Western Shirts.
+  - Multi-dimensional filters: Gender (Men, Women, Unisex), Occasion (Festive, Wedding, Ceremony, Everyday), Region (Kerala, Uttar Pradesh, Madhya Pradesh, Gujarat, Western), and full-text search.
+  - Unified commerce model: Shop ready-made off-the-rack (SKUs, inventory, XS–XXL) or launch interactive 3D Made-to-Measure customization from any product card.
+- **Unified Slide-Over Cart & Checkout Drawer**:
+  - Single cart containing both ready-made sizes and bespoke made-to-measure designs with personal tailoring measurements.
+  - Minor currency units integer arithmetic (INR paise / USD cents) with zero rounding error.
+  - Transparent dispatch timelines (ready-made 24–48h vs bespoke 7–10 days).
+- **Module B (Body Measurement & Fit Engine)**:
+  - 11 canonical body measurements stored in integer millimetres and kilograms. Zod schema validation, unit conversions, and anatomical consistency checks accommodating knee-length Kurtas (up to 65% height).
+- **Module C (3D Parametric Avatar)**:
+  - Anatomical mannequin viewer with proportional scaling derived from customer measurements and prominent disclosure.
+- **Module D & E (Customization Compatibility Engine)**:
+  - Declarative compatibility graph with auto-corrections and strict rejection of unfeasible combinations across Indian Kurtas and Western shirts.
+- **Module F (Real-Time 3D Garment Visualization & Procedural Weaves)**:
+  - Dynamic garment rendering:
+    - **Men's Kurta 3D (`KurtaModel3D`)**: Knee-length tunic, authentic side slit cuts (Chak), standing Mandarin/Nehru collars, front Kurta Patti placket, artisanal buttons (Brass, Carved Wood, Hand Fabric Potli), and 45mm Kerala Kasavu metallic gold zari borders.
+    - **Western Dress Shirt 3D (`ShirtModel3D`)**: Tailored dress shirts with spread/band collars, barrel/French cuffs, and plackets.
+  - Procedural PBR CanvasTexture generators: Kerala Kasavu woven gold zari with temple motifs, Chanderi raw silk with natural slubs, organic Gujarat Khadi, Lucknowi tone-on-tone Chikankari, and classic Poplin/Oxford/Twill.
+- **Module G (Size & Fit Engine)**:
+  - Garment ease rules: Indian Kurta cultural drape ease (+130mm chest, +140mm waist, +160mm hip for sitting comfort and side slit movement) vs Western shirt ease.
+  - Standard grading chart recommendation for both Kurta and Shirt tables.
+- **Module H (Server-Authoritative Pricing)**:
+  - Integer minor unit arithmetic in INR paise (₹) and USD cents ($) with zero rounding error.
+- **Module J & K (Master Tailor Production Specification & Tech Pack)**:
+  - Generates immutable tailoring specs with 320mm side slit depth, 280mm kurta patti placket dimensions, Kasavu zari border specifications, Bill of Materials, and cutting dimensions.
 
 ---
 
 ## 2. Zero-Cost Offline Development Strategy
 
 The platform operates **100% offline out-of-the-box** without requiring paid services, external 3D APIs, or cloud credentials:
-- **Local Storage Adapter**: Implements the identical data contracts as PostgreSQL/Supabase.
-- **Seed Data**: Pre-seeded with authentic fabrics, collar types, sleeve types, cuff types, grading tables, and test customer profiles.
+- **Local Storage Adapter**: Implements identical data contracts as PostgreSQL/Supabase.
+- **Seed Data**: Pre-seeded with authentic Indian garments, handloom fabrics, customization options, grading charts, and customer profiles.
 - **Procedural PBR Textures**: Generates fabric weave textures in-browser with zero external asset downloads.
 
 ---
@@ -47,7 +64,7 @@ npm run dev
 
 ### Running Automated Test Suite
 ```bash
-# Run Vitest test suites (26 unit tests covering all core engines)
+# Run Vitest test suites (33 unit tests covering all core engines)
 npm test
 
 # Run Vitest in watch mode
